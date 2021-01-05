@@ -23,6 +23,7 @@ Class Indices{
     */
     public function create(string $index, int $backupCount=1, float $docsThreshold=0.7){
         
+        
 
         // check $index-latest is setted
         $indexAlias = "{$index}-latest";
@@ -30,7 +31,11 @@ Class Indices{
             throw new CommonApiException("Index with name {$index}-latest exist.");
         }
 
+        
+
         $this->deleteIndices($index, $backupCount, $docsThreshold);
+
+        
         
         //add timestamp
         $date = date("YmdHis");
@@ -54,55 +59,14 @@ Class Indices{
         
     }
 
-    public function startBulk(string $index, float $docsThreshold=0.7){
-        
-        $indexAlias = "{$index}-latest";
-        //check {$index}-latest doesn't exist
-        if(count($this->catAliases($indexAlias)) > 0){
-            throw new CommonApiException("Index with name {$index}-latest exist.");
-        }
-        // set index latest
-        $indices = $this->countIndex($index, $docsThreshold);
-        $latestIndex = $indices[0];
-        $actions = [];
-        $actions[] = $this->updateAliasformatter("add", $latestIndex, $indexAlias);
-        $this->updateAliases($actions);
-
-        // update time interval
-        $this->setInterval($indexAlias, "-1");
-
-        return ["index"=>$latestIndex, "alias"=>$indexAlias];
-    }
-
-    public function endBulk(string $index){
-
-        $indexAlias = "{$index}-latest";
-        //check {$index}-latest exist
-        $names = $this->catAliases($indexAlias);
-        if(count($names) == 0){
-            throw new CommonApiException("Index with name {$index}-latest doesn't exist.");
-        }
-
-        // fresh
-        $this->refresh($indexAlias);
-
-        // update time interval
-        $this->setInterval($indexAlias, "10s");
-
-        // remove index latest
-        $latestIndex = $names[0];
-        $actions = [];
-        $actions[] = $this->updateAliasformatter("remove", $latestIndex, $indexAlias);
-        $this->updateAliases($actions);
-
-        return ["remove"=>["index"=>$latestIndex, "alias"=>$indexAlias]];
-    }
 
     public function deleteIndices(string $index, int $backupCount=1, float $docsThreshold=0.7){
 
         $indices = $this->countIndex($index, $docsThreshold);
         $currentIndices = $this->catAliases($index);
         $deleteIndices = [];
+
+        
 
         // delete index not in backupCount
         $indicesCount = count($indices);
@@ -116,6 +80,7 @@ Class Indices{
             $this->delete($indices[$i]);
             $deleteIndices[] = $indices[$i];
         }
+
 
         return ["remove" => $deleteIndices];
     }
@@ -163,7 +128,7 @@ Class Indices{
     * @param string $index
     * @return Array[string]
     */
-    private function countIndex(string $index, float $docsThreshold=0.7){
+    protected function countIndex(string $index, float $docsThreshold=0.7){
         
         $indicesInfo = $this->EsCatRepo->indices([]);
 
@@ -213,7 +178,7 @@ Class Indices{
     * @param string $configPath
     * @return string (raw Json)
     */
-    private function getCreateBody(string $configPath){
+    protected function getCreateBody(string $configPath){
         
         $mappingsJson = Storage::disk('local')->get("{$configPath}/mappings.json", '{}');
         $settingsJson = Storage::disk('local')->get("{$configPath}/settings.json", '{}');
@@ -250,7 +215,7 @@ Class Indices{
     * @param string $action, string $index, string $alias
     * @return Json
     */
-    private function updateAliases(array $actions){
+    protected function updateAliases(array $actions){
 
         $params = [
             'body' => [
@@ -266,7 +231,7 @@ Class Indices{
     * @param string $index
     * @return Json
     */
-    private function delete(string $index){
+    protected function delete(string $index){
         
         $params = [
             "index" => $index
@@ -280,7 +245,7 @@ Class Indices{
     * @param string $index
     * @return Json
     */
-    private function refresh(string $index){
+    protected function refresh(string $index){
         
         $params = [
             'index' => $index
@@ -294,7 +259,7 @@ Class Indices{
     * @param string $index, string interval
     * @return Json
     */
-    private function setInterval(string $index, string $interval){
+    protected function setInterval(string $index, string $interval){
         
         $params = [
             'index' => $index,
@@ -304,7 +269,7 @@ Class Indices{
         return $this->EsIndicesRepo->putSettings($params);
     }
 
-    private function updateAliasformatter($action, $index, $alias){
+    protected function updateAliasformatter($action, $index, $alias){
 
         $Aliasformat = [
             $action => [
