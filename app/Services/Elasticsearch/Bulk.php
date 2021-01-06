@@ -46,18 +46,25 @@ Class Bulk extends Indices{
         }
         $response['failure'] = $failureActions;
         
-        $params = ['body' => []];
+        $params = [];
         
         foreach ($validatedActions as $action){
-            $params['body'][] = [
+            
+            $query = [
                 $actionType => [
                     '_index' => $indexLatest,
-                    '_id' => $action['_id'],
                     '_type' => '_doc'
                 ]
             ];
 
-            unset($action['_id']);
+            if (array_key_exists('_id', $action)){
+                $query[$actionType]['_id'] = $action['_id'];
+                unset($action['_id']);
+            }
+
+            $params['body'][] = $query;
+
+            
             if ($actionType === "index"){
                 $params['body'][] = $action;
             }

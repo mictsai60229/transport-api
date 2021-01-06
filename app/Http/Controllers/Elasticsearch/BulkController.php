@@ -18,7 +18,7 @@ class BulkController extends Controller{
     public function bulk(Request $request, string $index){
 
         $validator = Validator::make($request->all(), [
-            'actionType' => ['required', Rule::in(['index', 'delete', 'update'])],
+            'action_type' => ['required', Rule::in(['index', 'delete', 'update'])],
             'body' => 'required'
         ]);
 
@@ -26,9 +26,9 @@ class BulkController extends Controller{
             return $validator->errors();
         }
 
-        $actionType = $request->input('actionType');
+        $actionType = $request->input('action_type');
         $actions = $request->input('body');
-        $validateRange = ($request->input('actionType') === "index")?"all":"part";
+        $validateRange = ($actionType === "index")?"all":"part";
 
         return $this->EsBulk->bulk($index, $actionType, $actions, $validateRange);
     }
