@@ -1,0 +1,246 @@
+{
+    "properties":{
+        "location_code": {
+            "type": "keyword",
+            "index": true,
+            "store": true,
+            "doc_values": true
+        },
+        "location_type": {
+            "type": "keyword",
+            "index": true,
+            "store": true,
+            "doc_values": true
+        },
+        "locale":{
+            "properties": {
+                "kk": {
+                    "properties": {
+                        "location_score": {
+                            "type": "integer",
+                            "index": true,
+                            "store": true
+                        }
+                    }
+                },
+                "tw": {
+                    "properties": {
+                        "location_score": {
+                            "type": "integer",
+                            "index": true,
+                            "store": true
+                        }
+                    }
+                },
+                "cn": {
+                    "properties": {
+                        "location_score": {
+                            "type": "integer",
+                            "index": true,
+                            "store": true
+                        }
+                    }
+                },
+                "hk": {
+                    "properties": {
+                        "location_score": {
+                            "type": "integer",
+                            "index": true,
+                            "store": true
+                        }
+                    }
+                },
+                "jp": {
+                    "properties": {
+                        "location_score": {
+                            "type": "integer",
+                            "index": true,
+                            "store": true
+                        }
+                    }
+                },
+                "kr": {
+                    "properties": {
+                        "location_score": {
+                            "type": "integer",
+                            "index": true,
+                            "store": true
+                        }
+                    }
+                },
+                "sg": {
+                    "properties": {
+                        "location_score": {
+                            "type": "integer",
+                            "index": true,
+                            "store": true
+                        }
+                    }
+                },
+                "my": {
+                    "properties": {
+                        "location_score": {
+                            "type": "integer",
+                            "index": true,
+                            "store": true
+                        }
+                    }
+                },
+                "th": {
+                    "properties": {
+                        "location_score": {
+                            "type": "integer",
+                            "index": true,
+                            "store": true
+                        }
+                    }
+                },
+                "vn": {
+                    "properties": {
+                        "location_score": {
+                            "type": "integer",
+                            "index": true,
+                            "store": true
+                        }
+                    }
+                },
+                "ph": {
+                    "properties": {
+                        "location_score": {
+                            "type": "integer",
+                            "index": true,
+                            "store": true
+                        }
+                    }
+                },
+                "id": {
+                    "properties": {
+                        "location_score": {
+                            "type": "integer",
+                            "index": true,
+                            "store": true
+                        }
+                    }
+                }
+            }
+        },
+        "language":{
+            "properties": {
+                "en": {
+                    "properties": {
+                        "name": {
+                            "type": "text",
+                            "index": true,
+                            "store": true,
+                            "analyzer": "en_ngram_analyzer",
+                            "search_analyzer": "en_search_analyzer",
+                            "fields": {
+                                "raw": {
+                                    "type": "keyword"
+                                }
+                            }
+                        }
+                    }
+                },
+                "ja": {
+                    "properties": {
+                        "name": {
+                            "type": "text",
+                            "index": true,
+                            "store": true,
+                            "analyzer": "ja_ngram_analyzer",
+                            "search_analyzer": "ja_search_analyzer"
+                        }
+                    }
+                },
+                "ko": {
+                    "properties": {
+                        "name": {
+                            "type": "text",
+                            "index": true,
+                            "store": true,
+                            "analyzer": "ko_ngram_analyzer",
+                            "search_analyzer": "ko_search_analyzer"
+                        }
+                    }
+                },
+                "vi": {
+                    "properties": {
+                        "name": {
+                            "type": "text",
+                            "index": true,
+                            "store": true,
+                            "analyzer": "vi_ngram_analyzer",
+                            "search_analyzer": "vi_search_analyzer"
+                        }
+                    }
+                },
+                "th": {
+                    "properties": {
+                        "name": {
+                            "type": "text",
+                            "index": true,
+                            "store": true,
+                            "analyzer": "th_ngram_analyzer",
+                            "search_analyzer": "th_search_analyzer"
+                        }
+                    }
+                },
+                "zh-tw": {
+                    "properties": {
+                        "name": {
+                            "type": "text",
+                            "index": true,
+                            "store": true,
+                            "analyzer": "zh_ngram_analyzer",
+                            "search_analyzer": "zh_search_analyzer"
+                        }
+                    }
+                },
+                "zh-hk": {
+                    "properties": {
+                        "name": {
+                            "type": "text",
+                            "index": true,
+                            "store": true,
+                            "analyzer": "zh_ngram_analyzer",
+                            "search_analyzer": "zh_search_analyzer"
+                        }
+                    }
+                },
+                "zh-cn": {
+                    "properties": {
+                        "name": {
+                            "type": "text",
+                            "index": true,
+                            "store": true,
+                            "analyzer": "zh_ngram_analyzer",
+                            "search_analyzer": "zh_search_analyzer"
+                        }
+                    }
+                }
+            }
+        },
+        "coordinates": {
+            "type" : "geo_point"
+        },
+        "parent_location_code":{
+            "type": "keyword",
+            "index": true,
+            "store": true,
+            "doc_values": true
+        },
+        "source": {
+            "type": "keyword",
+            "index": true,
+            "store": true,
+            "doc_values": true
+        },
+        "country": {
+            "type": "keyword",
+            "index": true,
+            "store": true,
+            "doc_values": true
+        }
+    }
+}

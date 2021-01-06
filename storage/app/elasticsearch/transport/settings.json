@@ -1,0 +1,161 @@
+{
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "auto_expand_replicas" : "0-10",
+    "refresh_interval": -1,
+    "max_result_window" : 10000,
+    "max_ngram_diff": 19,
+    "analysis" : {
+        "analyzer" : {
+            "en_index_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "whitespace",
+                "filter" : ["WD", "lowercase"]
+            },
+            "en_ngram_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "whitespace",
+                "filter" : ["WD", "lowercase", "EdgeNG"]
+            },
+            "en_search_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "whitespace",
+                "filter" : ["lowercase", "en_synonym"]
+            },
+            "vi_index_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "whitespace",
+                "filter" : ["WD", "ASCII", "lowercase"]
+            },
+            "vi_ngram_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "whitespace",
+                "filter" : ["WD", "ASCII", "lowercase", "EdgeNG"]
+            },
+            "vi_search_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "whitespace",
+                "filter" : ["lowercase", "en_synonym"]
+            },
+            "zh_index_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "zh_tokenizer",
+                "filter"  : ["WD"]
+            },
+            "zh_ngram_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "zh_tokenizer",
+                "filter"  : ["WD", "NG"]
+            },
+            "zh_search_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "zh_tokenizer",
+                "filter"  : ["lowercase", "zh_synonym"]
+            },
+            "ko_index_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "ko_tokenizer",
+                "filter"  : ["WD", "lowercase"]
+            },
+            "ko_ngram_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "whitespace",
+                "filter"  : ["WD", "lowercase", "NG"]
+            },
+            "ko_search_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "ko_tokenizer",
+                "filter"  : ["lowercase", "ko_synonym"]
+            },
+            "ja_index_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "ja_tokenizer",
+                "filter"  : ["kuromoji_baseform", "kuromoji_part_of_speech", "cjk_width", "ja_katakana_stemmer", "lowercase"]
+            },
+            "ja_ngram_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "ja_tokenizer",
+                "filter"  : ["kuromoji_baseform", "kuromoji_part_of_speech", "cjk_width", "ja_katakana_stemmer", "NG", "lowercase"]
+            },
+            "ja_search_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "ja_tokenizer",
+                "filter"  : ["kuromoji_baseform", "kuromoji_part_of_speech", "cjk_width", "ja_katakana_stemmer", "ja_synonym", "lowercase"]
+            },
+            "th_index_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "thai",
+                "filter"  : ["WD", "lowercase"]
+            },
+            "th_ngram_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "thai",
+                "filter"  : ["WD", "lowercase", "NG"]
+            },
+            "th_search_analyzer" : {
+                "type" : "custom",
+                "tokenizer" : "thai",
+                "filter"  : ["WD", "lowercase"]
+            }
+        },
+        "tokenizer" : {
+            "zh_tokenizer" : {
+                "type" : "hanlp",
+                "enable_custom_config" : "true",
+                "enable_custom_dictionary" : "true",
+                "enable_remote_dict" : "false",
+                "enable_normalization" : "true"
+            },
+            "ko_tokenizer" : {
+                "type" : "nori_tokenizer",
+                "decompound_mode" : "none",
+                "user_dictionary" : "dictionary/ko_dict.txt"
+            },
+            "ja_tokenizer" : {
+                "type" : "kuromoji_tokenizer",
+                "mode" : "search",
+                "user_dictionary" : "dictionary/ja_dict.txt"
+            }
+        },
+        "filter"  : {
+            "NG"  : {
+                "type"  : "ngram",
+                "min_gram"  : 1,
+                "max_gram"  : 20
+            },
+            "EdgeNG"  : {
+                "type"  : "edge_ngram",
+                "min_gram"  : 1,
+                "max_gram"  : 20
+            },
+            "WD"  : {
+                "type"  : "word_delimiter",
+                "catenate_all"  : true
+            },
+            "ASCII" : {
+                "type" : "asciifolding",
+                "preserve_original" : true
+            },
+            "en_synonym"  : {
+                "type"  : "synonym_graph",
+                "synonyms_path"  : "dictionary/en_synonym.txt"
+            },
+            "zh_synonym"  : {
+                "type"  : "synonym_graph",
+                "synonyms_path"  : "dictionary/zh_synonym.txt"
+            },
+            "ko_synonym"  : {
+                "type"  : "synonym_graph",
+                "synonyms_path"  : "dictionary/ko_synonym.txt"
+            },
+            "ja_synonym"  : {
+                "type"  : "synonym_graph",
+                "synonyms_path"  : "dictionary/ja_synonym.txt"
+            },
+            "ja_katakana_stemmer"  : {
+                "type"  : "kuromoji_stemmer",
+                "minimum_length"  : 4
+            }
+        }
+    }
+}
