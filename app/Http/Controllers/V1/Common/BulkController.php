@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Elasticsearch;
+namespace App\Http\Controllers\V1\Common;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

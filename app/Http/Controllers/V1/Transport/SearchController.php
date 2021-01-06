@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Elasticsearch\Transport;
+namespace App\Http\Controllers\V1\Transport;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use App\Services\Elasticsearch\Transport\Bulk as EsSearchService;
+use App\Services\Elasticsearch\Transport\Search as EsSearchService;
 
 class SearchController extends Controller{
 
@@ -15,11 +15,12 @@ class SearchController extends Controller{
         $this->EsSearch = $EsSearch;
     }
 
-    public function searchAutoSuggestion(Request $request, string $index){
+    public function transport(Request $request, string $index){
 
         $validator = Validator::make($request->all(), [
             'query' => 'required|string',
-            'hits' => 'required|integer',
+            'from' => 'nullable|integer',
+            'to' => 'nullable|integer',
             'location_type' => ['required', Rule::in(config('elasticsearch.transport.location_type'))],
             'lang' => ['required', Rule::in(config('elasticsearch.lang'))],
             'source' => 'required|string',
@@ -31,7 +32,8 @@ class SearchController extends Controller{
         }
 
         $query = $request->input('query');
-        $hits = $request->input('hits');
+        $from = $request->input('from');
+        $to = $request->input('to');
         $location_type = $request->input('location_type');
         $lang = $request->input('lang');
         $source = $request->input('source');
@@ -39,7 +41,7 @@ class SearchController extends Controller{
 
         
         
-        return $this->EsSearch->searchAutoSuggestion($index, $query, $hits, $location_type, $lang, $source, $country);
+        return $this->EsSearch->searchTransport($index, $query, $from, $to, $location_type, $lang, $source, $country);
     }
 
     public function searchLocation(Request $request, string $index){

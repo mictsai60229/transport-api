@@ -3,11 +3,11 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\Elasticsearch\IndicesController;
-use App\Http\Controllers\Elasticsearch\CatController;
-use App\Http\Controllers\Elasticsearch\BulkController;
-use App\Http\Controllers\Elasticsearch\Transport\BulkController as TransportBulkController;
-use App\Http\Controllers\Elasticsearch\Transport\SearchController as TransportSearchController;
+use App\Http\Controllers\V1\Common\IndicesController;
+use App\Http\Controllers\V1\Common\CatController;
+use App\Http\Controllers\V1\Common\BulkController;
+use App\Http\Controllers\V1\Transport\BulkController as TransportBulkController;
+use App\Http\Controllers\V1\Transport\SearchController as TransportSearchController;
 
 
 
@@ -22,35 +22,32 @@ use App\Http\Controllers\Elasticsearch\Transport\SearchController as TransportSe
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+
+Route::namespace('v1')->prefix('v1')->group(function () {
+
+
+    //for transport index
+    //bulk
+    Route::namespace('v1/transport')->prefix('transport')->group(function () {
+        Route::post('/bulk/setHotSpot', [TransportBulkController::class, 'setHotSpot']);
+
+        //search
+        Route::post('search/transport', [TransportSearchController::class, 'transport']);
+    });
+
+    //common
+    // indices
+    Route::put('/{index}/indices/create', [IndicesController::class, 'create']);
+    Route::post('/{index}/indices/setAliases', [IndicesController::class, 'setAliases']);
+    Route::post('/{index}/indices/change', [IndicesController::class, 'change']);
+
+    //bulk
+    Route::post('/{index}/bulk/bulk', [BulkController::class, 'bulk']);
+    Route::post('/{index}/bulk/start', [BulkController::class, 'start']);
+    Route::post('/{index}/bulk/end', [BulkController::class, 'end']);
+    //cat
+    Route::get('/cat/indices', [CatController::class, 'indices']);
+    Route::get('/cat/aliases', [CatController::class, 'aliases']);
+
 });
-
-
-// indices
-Route::put('/indices/{index}/create', [IndicesController::class, 'create']);
-Route::post('/indices/{index}/setAliases', [IndicesController::class, 'setAliases']);
-Route::post('/indices/{index}/change', [IndicesController::class, 'change']);
-
-//bulk
-Route::post('/bulk/{index}/bulk', [BulkController::class, 'bulk']);
-Route::post('/bulk/{index}/start', [BulkController::class, 'start']);
-Route::post('/bulk/{index}/end', [BulkController::class, 'end']);
-
-// for transport service only
-
-//bulk
-Route::post('/bulk/transport/setHotSpot', [TransportBulkController::class, 'setHotSpot']);
-
-//search
-Route::post('/search/transport/locations', [TransportSearchController::class, 'locations']);
-Route::post('/search/transport/locationsByGEO', [TransportSearchController::class, 'locationsByGEO']);
-Route::post('/search/transport/autoSuggestion', [TransportSearchController::class, 'autoSuggestion']);
-
-
-
-
-//cat
-Route::get('/cat/indices', [CatController::class, 'indices']);
-Route::get('/cat/aliases', [CatController::class, 'aliases']);
 
