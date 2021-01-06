@@ -59,4 +59,9 @@ class Indices extends Connection{
         return $this->getIndices()->refresh($params);
     }
 
+    public function search(array $params = []){
+
+        return $this->getClient()->search($params);
+    }
+
 }

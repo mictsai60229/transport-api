@@ -11,18 +11,21 @@ use App\Services\Elasticsearch\Transport\Search as EsSearchService;
 class SearchController extends Controller{
 
     protected $EsSearch;
+    protected $index;
     public function __construct(EsSearchService $EsSearch){
         $this->EsSearch = $EsSearch;
+        $this->index = "transport";
     }
 
-    public function transport(Request $request, string $index){
+    public function transport(Request $request){
 
         $validator = Validator::make($request->all(), [
             'query' => 'required|string',
             'from' => 'nullable|integer',
-            'to' => 'nullable|integer',
+            'size' => 'nullable|integer',
             'location_type' => ['required', Rule::in(config('elasticsearch.transport.location_type'))],
-            'lang' => ['required', Rule::in(config('elasticsearch.lang'))],
+            'lang' => ['required', Rule::in(config('elasticsearch.language'))],
+            'locale' => ['required', Rule::in(config('elasticsearch.locale'))],
             'source' => 'required|string',
             'country' => 'required|string'
         ]);
@@ -31,17 +34,19 @@ class SearchController extends Controller{
             return $validator->errors();
         }
 
+        $index = $this->index;
         $query = $request->input('query');
         $from = $request->input('from');
-        $to = $request->input('to');
+        $size = $request->input('size');
         $location_type = $request->input('location_type');
         $lang = $request->input('lang');
+        $locale = $request->input('locale');
         $source = $request->input('source');
         $country = $request->input('country');
 
         
         
-        return $this->EsSearch->searchTransport($index, $query, $from, $to, $location_type, $lang, $source, $country);
+        return $this->EsSearch->searchTransport($index, $query, $from, $size, $location_type, $lang, $locale, $source, $country);
     }
 
     public function searchLocation(Request $request, string $index){
