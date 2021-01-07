@@ -149,7 +149,12 @@
                             "index": true,
                             "store": true,
                             "analyzer": "ja_ngram_analyzer",
-                            "search_analyzer": "ja_search_analyzer"
+                            "search_analyzer": "ja_search_analyzer",
+                            "fields": {
+                                "raw": {
+                                    "type": "keyword"
+                                }
+                            }
                         }
                     }
                 },
@@ -160,7 +165,12 @@
                             "index": true,
                             "store": true,
                             "analyzer": "ko_ngram_analyzer",
-                            "search_analyzer": "ko_search_analyzer"
+                            "search_analyzer": "ko_search_analyzer",
+                            "fields": {
+                                "raw": {
+                                    "type": "keyword"
+                                }
+                            }
                         }
                     }
                 },
@@ -171,7 +181,12 @@
                             "index": true,
                             "store": true,
                             "analyzer": "vi_ngram_analyzer",
-                            "search_analyzer": "vi_search_analyzer"
+                            "search_analyzer": "vi_search_analyzer",
+                            "fields": {
+                                "raw": {
+                                    "type": "keyword"
+                                }
+                            }
                         }
                     }
                 },
@@ -182,7 +197,12 @@
                             "index": true,
                             "store": true,
                             "analyzer": "th_ngram_analyzer",
-                            "search_analyzer": "th_search_analyzer"
+                            "search_analyzer": "th_search_analyzer",
+                            "fields": {
+                                "raw": {
+                                    "type": "keyword"
+                                }
+                            }
                         }
                     }
                 },
@@ -193,7 +213,12 @@
                             "index": true,
                             "store": true,
                             "analyzer": "zh_ngram_analyzer",
-                            "search_analyzer": "zh_search_analyzer"
+                            "search_analyzer": "zh_search_analyzer",
+                            "fields": {
+                                "raw": {
+                                    "type": "keyword"
+                                }
+                            }
                         }
                     }
                 },
@@ -204,7 +229,12 @@
                             "index": true,
                             "store": true,
                             "analyzer": "zh_ngram_analyzer",
-                            "search_analyzer": "zh_search_analyzer"
+                            "search_analyzer": "zh_search_analyzer",
+                            "fields": {
+                                "raw": {
+                                    "type": "keyword"
+                                }
+                            }
                         }
                     }
                 },
@@ -215,7 +245,12 @@
                             "index": true,
                             "store": true,
                             "analyzer": "zh_ngram_analyzer",
-                            "search_analyzer": "zh_search_analyzer"
+                            "search_analyzer": "zh_search_analyzer",
+                            "fields": {
+                                "raw": {
+                                    "type": "keyword"
+                                }
+                            }
                         }
                     }
                 }
