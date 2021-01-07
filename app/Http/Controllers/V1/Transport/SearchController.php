@@ -21,8 +21,8 @@ class SearchController extends Controller{
 
         $validator = Validator::make($request->all(), [
             'query' => 'required|string',
-            'from' => 'nullable|integer',
-            'size' => 'nullable|integer',
+            'start' => 'nullable|integer',
+            'count' => 'nullable|integer',
             'location_type' => ['required', Rule::in(config('elasticsearch.transport.location_type'))],
             'lang' => ['required', Rule::in(config('elasticsearch.language'))],
             'locale' => ['required', Rule::in(config('elasticsearch.locale'))],
@@ -36,8 +36,8 @@ class SearchController extends Controller{
 
         $index = $this->index;
         $query = $request->input('query');
-        $from = $request->input('from');
-        $size = $request->input('size');
+        $from = $request->input('start', 0);
+        $size = $request->input('count', 100);
         $location_type = $request->input('location_type');
         $lang = $request->input('lang');
         $locale = $request->input('locale');
