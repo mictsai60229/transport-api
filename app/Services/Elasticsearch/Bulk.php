@@ -90,7 +90,7 @@ Class Bulk extends Indices{
         $indices = $this->countIndex($index, $docsThreshold);
         $latestIndex = $indices[0];
         $actions = [];
-        $actions[] = $this->updateAliasformatter("add", $latestIndex, $indexAlias);
+        $actions[] = $this->updateAliasFormatter("add", $latestIndex, $indexAlias);
         $this->updateAliases($actions);
 
         // update time interval
@@ -117,7 +117,7 @@ Class Bulk extends Indices{
         // remove index latest
         $latestIndex = $names[0];
         $actions = [];
-        $actions[] = $this->updateAliasformatter("remove", $latestIndex, $indexAlias);
+        $actions[] = $this->updateAliasFormatter("remove", $latestIndex, $indexAlias);
         $this->updateAliases($actions);
 
         return ["remove"=>["index"=>$latestIndex, "alias"=>$indexAlias]];

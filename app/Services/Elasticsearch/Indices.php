@@ -51,7 +51,7 @@ Class Indices{
         //set alias to "{$index}-newest"
         $createIndex = $response["index"];
         $actions = [];
-        $actions[] = $this->updateAliasformatter("add", $createIndex, $indexAlias);
+        $actions[] = $this->updateAliasFormatter("add", $createIndex, $indexAlias);
         $this->setAliases($createIndex, $indexAlias);
         $response['alias'] = $indexAlias;
 
@@ -102,9 +102,9 @@ Class Indices{
 
 
         foreach ($removeIndices as $index){
-            $actions[] = $this->updateAliasformatter("remove", $index, $alias);
+            $actions[] = $this->updateAliasFormatter("remove", $index, $alias);
         }
-        $actions[] = $this->updateAliasformatter("add", $targetIndex, $alias);
+        $actions[] = $this->updateAliasFormatter("add", $targetIndex, $alias);
         
         $this->updateAliases($actions);
         $response['acknowledge'] = true;
@@ -179,9 +179,9 @@ Class Indices{
     * @return string (raw Json)
     */
     protected function getCreateBody(string $configPath){
-        
-        $mappingsJson = Storage::disk('local')->get("{$configPath}/mappings.json", '{}');
-        $settingsJson = Storage::disk('local')->get("{$configPath}/settings.json", '{}');
+    
+        $mappingsJson = Storage::disk('local')->get("{$configPath}/mappings.json");
+        $settingsJson = Storage::disk('local')->get("{$configPath}/settings.json");
 
         return "{
             \"mappings\" : {$mappingsJson},
@@ -269,7 +269,7 @@ Class Indices{
         return $this->EsIndicesRepo->putSettings($params);
     }
 
-    protected function updateAliasformatter($action, $index, $alias){
+    protected function updateAliasFormatter($action, $index, $alias){
 
         $Aliasformat = [
             $action => [
