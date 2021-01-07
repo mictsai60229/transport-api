@@ -22,8 +22,6 @@ Class Indices{
     * @return 
     */
     public function create(string $index, int $backupCount=1, float $docsThreshold=0.7){
-        
-        
 
         // check $index-latest is setted
         $indexAlias = "{$index}-latest";
@@ -31,12 +29,8 @@ Class Indices{
             throw new CommonApiException("Index with name {$index}-latest exist.");
         }
 
-        
-
         $this->deleteIndices($index, $backupCount, $docsThreshold);
 
-        
-        
         //add timestamp
         $date = date("YmdHis");
         $indexTimestamp = "{$index}-{$date}";
@@ -66,7 +60,6 @@ Class Indices{
         $currentIndices = $this->catAliases($index);
         $deleteIndices = [];
 
-        
 
         // delete index not in backupCount
         $indicesCount = count($indices);
@@ -142,22 +135,29 @@ Class Indices{
         }
         $indicesInfo = $newIndicesInfo;
 
+        $mainDocsCount = 0;
         $docsCount =[];
         $indexNames = [];
+
+        $mainNames = $this->catAliases($index);
+        $mainIndex = (count($mainNames) > 0)? $mainNames[0]: null;
+
         foreach($indicesInfo as $indexInfo){
             $docsCount[] =  $indexInfo['docs.count'];
             $indexNames[] = $indexInfo['index'];
+
+            if ($indexInfo['index'] === $mainIndex){
+                $mainDocsCount = $indexInfo['docs.count'];
+            }
         }
 
-        $maxDocsCount = max($docsCount);
-        if ($maxDocsCount > 0){
-            foreach($docsCount as $key => $count){
-                if ($count/$maxDocsCount >=  $docsThreshold){
-                    $docsCount[$key] = 1;
-                }
-                else{
-                    $docsCount[$key] = 0;
-                }
+        
+        foreach($docsCount as $key => $count){
+            if ($count >=  $docsThreshold*$mainDocsCount){
+                $docsCount[$key] = 1;
+            }
+            else{
+                $docsCount[$key] = 0;
             }
         }
 
