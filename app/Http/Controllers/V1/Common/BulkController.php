@@ -10,9 +10,9 @@ use App\Services\Elasticsearch\Bulk as EsBulkService;
 
 class BulkController extends Controller{
 
-    protected $EsBulk;
-    public function __construct(EsBulkService $EsBulk){
-        $this->EsBulk = $EsBulk;
+    protected $es_bulk;
+    public function __construct(EsBulkService $es_bulk){
+        $this->es_bulk = $es_bulk;
     }
 
     public function bulk(Request $request, string $index){
@@ -26,33 +26,35 @@ class BulkController extends Controller{
             return $validator->errors();
         }
 
-        $actionType = $request->input('action_type');
+        $action_type = $request->input('action_type');
         $actions = $request->input('body');
-        $validateRange = ($actionType === "index")?"all":"part";
+        $validate_range = ($action_type === "index")?"all":"part";
 
-        return $this->EsBulk->bulk($index, $actionType, $actions, $validateRange);
+        return $this->es_bulk->bulk($index, $action_type, $actions, $validate_range);
     }
 
     public function start(Request $request, string $index){
         
         $validator = Validator::make($request->all(), [
+            'target_index' => 'nullable|string',
             'force' => 'nullable|boolean',
-            'threshold' => 'nullable|numeric|between:0,1'
+            'docs_threshold' => 'nullable|numeric|between:0,1'
         ]);
 
         if ($validator->fails()) {
             return $validator->errors();
         }
 
+        $target_index = $request->input('target_index', null);
         $force = $request->input('force', null);
-        $docsThreshold = $force?0.0:(float)$request->input('threshold', 0.7);
+        $docs_threshold = $force?0.0:(float)$request->input('docs_threshold', 0.7);
 
-        return $this->EsBulk->start($index, $docsThreshold);
+        return $this->es_bulk->start($index, $target_index, $docs_threshold);
     }
 
     public function end(Request $request, string $index){
 
-        return $this->EsBulk->end($index);
+        return $this->es_bulk->end($index);
     }
 
 

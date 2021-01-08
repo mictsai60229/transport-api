@@ -14,61 +14,61 @@ Class Bulk extends Indices{
      * @param array $actions
      * @return void
      */
-    public function bulk(string $index, string $actionType, array $actions, string $validateRange){
+    public function bulk(string $index, string $action_type, array $actions, string $validate_range){
 
-        $indexLatest = "{$index}-latest";
+        $index_latest = "{$index}-latest";
         // check {$index}-latest is setted
-        if (count($this->catAliases($indexLatest)) == 0){
+        if (empty($this->catAlias($index_latest))){
             throw new CommonApiException("Index with name {$index}-latest doesn't exist.");
         }
 
         $formatter = app("Formatter/{$index}");
 
-        $validatedActions = [];
-        $failureActions = [];
+        $validated_actions = [];
+        $failure_actions = [];
         foreach($actions as $action){
 
-            $validatedAction = $formatter->validate($action, $validateRange);
-            if (empty($validatedAction)){
-                $failureActions[] = $action;
+            $validated_action = $formatter->validate($action, $validate_range);
+            if (empty($validated_action)){
+                $failure_actions[] = $action;
             }
             else{
-                $validatedActions[] = $validatedAction;
+                $validated_actions[] = $validated_action;
             }
         }
 
         
-        if (empty($validatedActions)){
+        if (empty($validated_actions)){
             $response = [];
             $response['failure'] = $failureActions;
 
             return $response;
         }
-        $response['failure'] = $failureActions;
+        $response['failure'] = $failure_actions;
         
         $params = [];
         
-        foreach ($validatedActions as $action){
+        foreach ($validated_actions as $action){
             
             $query = [
-                $actionType => [
-                    '_index' => $indexLatest,
+                $action_type => [
+                    '_index' => $index_latest,
                     '_type' => '_doc'
                 ]
             ];
 
-            if (array_key_exists('_id', $action)){
-                $query[$actionType]['_id'] = $action['_id'];
+            if (isset($action['_id'])){
+                $query[$action_type]['_id'] = $action['_id'];
                 unset($action['_id']);
             }
 
             $params['body'][] = $query;
 
             
-            if ($actionType === "index"){
+            if ($action_type === "index"){
                 $params['body'][] = $action;
             }
-            else if($actionType === "update"){
+            else if($action_type === "update"){
                 $params['body'][] = [
                     "doc" => $action
                 ];
@@ -76,51 +76,53 @@ Class Bulk extends Indices{
             
         }
 
-        return $this->EsIndicesRepo->bulk($params);
+        return $this->es_indices_repo->bulk($params);
     }
 
-    public function start(string $index, float $docsThreshold=0.7){
+    public function start(string $index, string $target_index=null, float $docs_threshold=0.7){
         
-        $indexAlias = "{$index}-latest";
+        $index_alias = "{$index}-latest";
         //check {$index}-latest doesn't exist
-        if(count($this->catAliases($indexAlias)) > 0){
+        if(!empty($this->catAlias($index_alias))){
             throw new CommonApiException("Index with name {$index}-latest exist.");
         }
         // set index latest
-        $indices = $this->countIndex($index, $docsThreshold);
-        $latestIndex = $indices[0];
+        $latest_index = $target_index;
+        if (empty($target_index)){
+            $indices = $this->count_index($index, $docs_threshold);
+            $latest_index = $indices[0];
+        }
         $actions = [];
-        $actions[] = $this->updateAliasFormatter("add", $latestIndex, $indexAlias);
+        $actions[] = $this->updateAliasFormatter("add", $latest_index, $index_alias);
         $this->updateAliases($actions);
 
         // update time interval
-        $this->setInterval($indexAlias, "-1");
+        $this->setInterval($index_alias, "-1");
 
-        return ["index"=>$latestIndex, "alias"=>$indexAlias];
+        return ["index"=>$latest_index, "alias"=>$index_alias];
     }
 
     public function end(string $index){
 
-        $indexAlias = "{$index}-latest";
+        $index_alias = "{$index}-latest";
         //check {$index}-latest exist
-        $names = $this->catAliases($indexAlias);
-        if(count($names) == 0){
+        $latest_index = $this->catAlias($index_alias);
+        if(empty($latest_index)){
             throw new CommonApiException("Index with name {$index}-latest doesn't exist.");
         }
 
         // fresh
-        $this->refresh($indexAlias);
+        $this->refresh($index_alias);
 
         // update time interval
-        $this->setInterval($indexAlias, "10s");
+        $this->setInterval($index_alias, "10s");
 
         // remove index latest
-        $latestIndex = $names[0];
         $actions = [];
-        $actions[] = $this->updateAliasFormatter("remove", $latestIndex, $indexAlias);
+        $actions[] = $this->updateAliasFormatter("remove", $latest_index, $index_alias);
         $this->updateAliases($actions);
 
-        return ["remove"=>["index"=>$latestIndex, "alias"=>$indexAlias]];
+        return ["remove"=>["index"=>$latest_index, "alias"=>$index_alias]];
     }
 
     public function setHotSpot(array $location_codes, string $location_type, string $locale){

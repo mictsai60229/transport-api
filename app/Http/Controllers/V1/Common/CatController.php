@@ -10,23 +10,23 @@ use App\Repositories\Elasticsearch\Cat as EsCatRepo;
 
 class CatController extends Controller{
 
-    protected $EsCat;
-    public function __construct(EsCatRepo $EsCat){
-        $this->EsCat = $EsCat;
+    protected $es_cat;
+    public function __construct(EsCatRepo $es_cat){
+        $this->es_cat = $es_cat;
     }
 
     public function aliases(Request $request){
 
         $params = $request->all();
 
-        return $this->EsCat->aliases($params);
+        return $this->es_cat->aliases($params);
     }
 
     public function indices(Request $request){
 
         $params = $request->all();
 
-        return $this->EsCat->indices($params);
+        return $this->es_cat->indices($params);
     }
 
     

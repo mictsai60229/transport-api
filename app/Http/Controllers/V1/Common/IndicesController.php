@@ -11,9 +11,9 @@ use App\Services\Elasticsearch\Indices as EsIndicesService;
 
 class IndicesController extends Controller{
 
-    protected $EsIndices;
-    public function __construct(EsIndicesService $EsIndices){
-        $this->EsIndices = $EsIndices;
+    protected $es_indices;
+    public function __construct(EsIndicesService $es_indices){
+        $this->es_indices = $es_indices;
     }
     /**
      * Undocumented function
@@ -25,56 +25,42 @@ class IndicesController extends Controller{
     public function create(Request $request, string $index){
         
         $validator = Validator::make($request->all(), [
-            'backupCount' => 'nullable|numeric|min:0',
+            'backup_count' => 'nullable|numeric|min:0',
             'force' => 'nullable|boolean',
-            'docthreshold' => 'nullable|numeric|between:0,1'
+            'docs_threshold' => 'nullable|numeric|between:0,1'
         ]);
 
         if ($validator->fails()) {
             return $validator->errors();
         }
 
-        $backupCount = $request->input('backupCount', 1);
+        $backup_count = $request->input('backup_count', 0);
         $force = $request->input('force', null);
-        $docsThreshold = $force?0.0:(float)$request->input('threshold', 0.7);
+        $docs_threshold = $force?0.0:(float)$request->input('docs_threshold', 0.7);
         
 
-        return $this->EsIndices->create($index, $backupCount, $docsThreshold);
+        return $this->es_indices->create($index, $backup_count, $docs_threshold);
     }
 
-    public function setAliases(Request $request, string $index){
-
-        $validator = Validator::make($request->all(), [
-            'alias' => 'required'
-        ]);
-
-        if ($validator->fails()) {
-            return $validator->errors();
-        }
-
-        $alias = $request->input('alias');
-
-        return $this->EsIndices->setAliases($index, $alias);
-    }
 
     public function change(Request $request, string $index){
 
         $validator = Validator::make($request->all(), [
-            'alias' => 'nullable',
+            'target_index' => 'nullable|string',
             'force' => 'nullable|boolean',
-            'threshold' => 'nullable|numeric|between:0,1'
+            'docs_threshold' => 'nullable|numeric|between:0,1'
         ]);
 
         if ($validator->fails()) {
             return $validator->errors();
         }
 
-        $alias = $request->input('alias', null);
+        $target_index = $request->input('target_index', null);
         $force = $request->input('force', null);
-        $docsThreshold = $force?0.0:(float)$request->input('threshold', 0.7);
+        $docs_threshold = $force?0.0:(float)$request->input('docs_threshold', 0.7);
 
 
-        return $this->EsIndices->setAliasesLatest($index, $docsThreshold);
+        return $this->es_indices->setAliases($index, $target_index, $docs_threshold);
         
     }
 

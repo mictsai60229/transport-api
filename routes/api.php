@@ -32,7 +32,7 @@ Route::namespace('v1')->prefix('v1')->group(function () {
         Route::post('/bulk/setHotSpot', [TransportBulkController::class, 'setHotSpot']);
 
         //search
-        Route::post('search/transport', [TransportSearchController::class, 'transport']);
+        Route::post('/search/transport', [TransportSearchController::class, 'transport']);
     });
 
     //common

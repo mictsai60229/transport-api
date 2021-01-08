@@ -33,7 +33,7 @@ Class Search extends Indices{
             ]           
         ];
 
-        return $this->EsIndicesRepo->search($params);
+        return $this->es_indices_repo->search($params);
     }
     
 }

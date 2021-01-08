@@ -11,7 +11,7 @@ Class Bulk extends Indices{
 
         $indexLatest = "{$index}-latest";
         // check {$index}-latest is setted
-        if (count($this->catAliases($indexLatest)) == 0){
+        if (empty($this->catAlias($indexLatest))){
             throw new CommonApiException("Index with name {$index}-latest doesn't exist.");
         }
 

@@ -8,12 +8,12 @@ use App\Exceptions\CommonApiException;
 
 Class Indices{
 
-    protected $EsIndicesRepo;
-    protected $EsCatRepo;
+    protected $es_indices_repo;
+    protected $es_cat_repo;
 
     public function __construct(){
-        $this->EsIndicesRepo = new EsRepo\Indices;
-        $this->EsCatRepo  = new EsRepo\Cat; 
+        $this->es_indices_repo = new EsRepo\Indices;
+        $this->es_cat_repo  = new EsRepo\Cat; 
     }
 
     /*
@@ -21,99 +21,101 @@ Class Indices{
     * @param string $index, string $configPath
     * @return 
     */
-    public function create(string $index, int $backupCount=1, float $docsThreshold=0.7){
+    public function create(string $index, int $backup_count=0, float $docs_threshold=0.7){
 
         // check $index-latest is setted
-        $indexAlias = "{$index}-latest";
-        if(count($this->catAliases($indexAlias)) > 0){
+        $index_alias = "{$index}-latest";
+        if(!empty($this->catAlias($index_alias))){
             throw new CommonApiException("Index with name {$index}-latest exist.");
         }
 
-        $this->deleteIndices($index, $backupCount, $docsThreshold);
+        $this->deleteIndices($index, $backup_count, $docs_threshold);
 
         //add timestamp
         $date = date("YmdHis");
-        $indexTimestamp = "{$index}-{$date}";
+        $index_timestamp = "{$index}-{$date}";
 
         $params = [
-            'index' => $indexTimestamp,
+            'index' => $index_timestamp,
             'body' => $this->getCreateBody("elasticsearch/{$index}")
         ];
 
-        $response = $this->EsIndicesRepo->create($params);
+        $response = $this->es_indices_repo->create($params);
         
         //set alias to "{$index}-newest"
-        $createIndex = $response["index"];
+        $create_index = $response["index"];
         $actions = [];
-        $actions[] = $this->updateAliasFormatter("add", $createIndex, $indexAlias);
-        $this->setAliases($createIndex, $indexAlias);
-        $response['alias'] = $indexAlias;
+        $actions[] = $this->updateAliasFormatter("add", $create_index, $index_alias);
+        $this->updateAliases($actions);
+        $response['alias'] = $index_alias;
 
         return $response;
         
     }
 
 
-    public function deleteIndices(string $index, int $backupCount=1, float $docsThreshold=0.7){
+    public function deleteIndices(string $index, int $backup_count=0, float $docs_threshold=0.7){
 
-        $indices = $this->countIndex($index, $docsThreshold);
-        $currentIndices = $this->catAliases($index);
-        $deleteIndices = [];
+        $indices = $this->countIndex($index, $docs_threshold);
+        $current_index = $this->catAlias($index);
+        $delete_indices = [];
 
+
+        $indices = array_filter($indices, function($v) use(&$current_index){
+            return $v !== $current_index;
+        });
+        $indices = array_values($indices);
 
         // delete index not in backupCount
-        $indicesCount = count($indices);
-        for ($i=$backupCount ; $i<$indicesCount ; $i++ ){
+        $indices_count = count($indices);
 
-            //avoid removing current alias
-            if (in_array($indices[$i], $currentIndices)){
-                continue;
-            }
+        for ($i=$backup_count;$i<$indices_count;$i++){
 
             $this->delete($indices[$i]);
-            $deleteIndices[] = $indices[$i];
+            $delete_indices[] = $indices[$i];
         }
 
 
-        return ["remove" => $deleteIndices];
+        return ["remove" => $delete_indices];
     }
 
-    /*
-    * Set Aliases to index
-    * @param string $targetIndex, string alias
-    * @return Json
-    */
-    public function setAliases(string $targetIndex, string $alias){
-        
-        # indices with name $alias
-        $removeIndices = $this->catAliases($alias);
-        $response = [];
-        $actions = [];
-        
-        $response['remove'] = $removeIndices;
-        $response['add'] = $targetIndex;
-
-
-        foreach ($removeIndices as $index){
-            $actions[] = $this->updateAliasFormatter("remove", $index, $alias);
-        }
-        $actions[] = $this->updateAliasFormatter("add", $targetIndex, $alias);
-        
-        $this->updateAliases($actions);
-        $response['acknowledge'] = true;
-
-        return $response;
-    }
 
     /*
     * Set Alias to the newest created not empty index
     * @param string $index
     * @return Array[string]
     */
-    public function setAliasesLatest(string $index, float $docsThreshold=0.7){
+    public function setAliases(string $index, string $target_index = null, float $docs_threshold=0.7){
         
-        $indices = $this->countIndex($index, $docsThreshold);
-        return $this->setAliases($indices[0], $index);
+        $aliases_actions = [];
+        $response = [];
+
+        if (!isset($target_index)){
+            $indices = $this->countIndex($index, $docs_threshold);
+            $target_index = $indices[0];
+        }
+
+        $index_alias = "{$index}-latest";
+        $latest_index = $this->catAlias($index_alias);
+        if ($latest_index === $target_index){
+            $this->refresh($target_index);
+            $this->setInterval($index_alias, "10s");
+            $aliases_actions[] = $this->updateAliasFormatter("remove", $target_index, $index_alias);
+        }
+        
+        $remove_index = $this->catAlias($index);
+
+        if (!empty($remove_index)){
+            $aliases_actions[] = $this->updateAliasFormatter("remove", $remove_index, $index);
+            $response['remove'] = $remove_index;
+        }
+        
+        $aliases_actions[] = $this->updateAliasFormatter("add", $target_index, $index);
+        $response['add'] = $target_index;
+        
+        $this->updateAliases($aliases_actions);
+
+        return $response;
     }
 
     /*
@@ -121,53 +123,49 @@ Class Indices{
     * @param string $index
     * @return Array[string]
     */
-    protected function countIndex(string $index, float $docsThreshold=0.7){
+    protected function countIndex(string $index, float $docs_threshold=0.7){
         
-        $indicesInfo = $this->EsCatRepo->indices([]);
+        $indices_info = $this->es_cat_repo->indices([]);
 
         //filter index with "{$index}-{$timestamp}"
-        $newIndicesInfo = [];
         $pattern = "/{$index}\-\d{14}/";
-        foreach ($indicesInfo as $indexInfo){
-            if (preg_match($pattern, $indexInfo['index'],$matches)){
-                $newIndicesInfo[] = $indexInfo;
+        $indices_info = array_filter($indices_info, function($v) use(&$pattern){
+            return preg_match($pattern, $v['index']);
+        });
+        $indices_info = array_values($indices_info);
+
+        $current_docs_count = 0;
+        $docs_count =[];
+        $index_names = [];
+
+        $current_index = $this->catAlias($index);
+
+        foreach($indices_info as $index_info){
+            $docs_count[] =  $index_info['docs.count'];
+            $index_names[] = $index_info['index'];
+
+            if ($index_info['index'] === $current_index){
+                $current_docs_count = $index_info['docs.count'];
             }
         }
-        $indicesInfo = $newIndicesInfo;
-
-        $mainDocsCount = 0;
-        $docsCount =[];
-        $indexNames = [];
-
-        $mainNames = $this->catAliases($index);
-        $mainIndex = (count($mainNames) > 0)? $mainNames[0]: null;
-
-        foreach($indicesInfo as $indexInfo){
-            $docsCount[] =  $indexInfo['docs.count'];
-            $indexNames[] = $indexInfo['index'];
-
-            if ($indexInfo['index'] === $mainIndex){
-                $mainDocsCount = $indexInfo['docs.count'];
-            }
-        }
-
         
-        foreach($docsCount as $key => $count){
-            if ($count >=  $docsThreshold*$mainDocsCount){
-                $docsCount[$key] = 1;
+        $validate_docs_count = $docs_threshold*$current_docs_count;
+        $docs_count = array_map(function($v) use(&$validate_docs_count){
+            if ($v >= $validate_docs_count){
+                return 1;
             }
             else{
-                $docsCount[$key] = 0;
+                return 0;
             }
-        }
+        }, $docs_count);
 
-        array_multisort($docsCount, SORT_NUMERIC, SORT_DESC,
-            $indexNames, SORT_STRING, SORT_DESC,
-            $indicesInfo);
+        array_multisort($docs_count, SORT_NUMERIC, SORT_DESC,
+            $index_names, SORT_STRING, SORT_DESC,
+            $indices_info);
 
         $indices = [];
-        foreach ($indicesInfo as $indexInfo){
-            $indices[] = $indexInfo['index'];
+        foreach ($indices_info as $index_info){
+            $indices[] = $index_info['index'];
         }
 
         return $indices;
@@ -178,14 +176,14 @@ Class Indices{
     * @param string $configPath
     * @return string (raw Json)
     */
-    protected function getCreateBody(string $configPath){
+    protected function getCreateBody(string $config_path){
     
-        $mappingsJson = Storage::disk('local')->get("{$configPath}/mappings.json");
-        $settingsJson = Storage::disk('local')->get("{$configPath}/settings.json");
+        $mappings_json = Storage::disk('local')->get("{$config_path}/mappings.json");
+        $settings_json = Storage::disk('local')->get("{$config_path}/settings.json");
 
         return "{
-            \"mappings\" : {$mappingsJson},
-            \"settings\" : {$settingsJson}
+            \"mappings\" : {$mappings_json},
+            \"settings\" : {$settings_json}
         }";
     }
 
@@ -194,20 +192,20 @@ Class Indices{
     * @param string $name
     * @return array(string)
     */
-    protected function catAliases(string $name){
+    protected function catAlias(string $name){
         
         $params = [
             'name' => $name
         ];
 
-        $aliases_result = $this->EsCatRepo->aliases($params);
-        $indices = [];
+        $aliases_result = $this->es_cat_repo->aliases($params);
 
-        foreach($aliases_result as $alias_result){
-            $indices[] = $alias_result["index"];
+        $index = null;
+        if (count($aliases_result)>0){
+            $index = $aliases_result[0]["index"];
         }
 
-        return $indices;
+        return $index;
     }
 
     /*
@@ -223,7 +221,7 @@ Class Indices{
             ]
         ];
 
-        return $this->EsIndicesRepo->updateAliases($params);
+        return $this->es_indices_repo->updateAliases($params);
     }
 
     /*
@@ -237,7 +235,7 @@ Class Indices{
             "index" => $index
         ];
 
-        return $this->EsIndicesRepo->delete($params);
+        return $this->es_indices_repo->delete($params);
     }
 
     /*
@@ -251,7 +249,7 @@ Class Indices{
             'index' => $index
         ];
 
-        return $this->EsIndicesRepo->refresh($params);
+        return $this->es_indices_repo->refresh($params);
     }
 
     /*
@@ -266,12 +264,12 @@ Class Indices{
             'body' => ['refresh_interval' => $interval ]
         ];
 
-        return $this->EsIndicesRepo->putSettings($params);
+        return $this->es_indices_repo->putSettings($params);
     }
 
     protected function updateAliasFormatter($action, $index, $alias){
 
-        $Aliasformat = [
+        $alias_format = [
             $action => [
                 'index' => $index,
                 'alias' => $alias
@@ -279,8 +277,8 @@ Class Indices{
         ];
 
         if ($action === 'add'){
-            $Aliasformat[$action]['is_write_index'] = True;
+            $alias_format[$action]['is_write_index'] = True;
         }
-        return $Aliasformat;
+        return $alias_format;
     }
 }
