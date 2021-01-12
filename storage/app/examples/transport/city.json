@@ -1,0 +1,11 @@
+{
+    "location_code": "00000",
+    "location_type": "city",
+    "locale": {"kk": {"location_score": 0},
+     "tw": {"location_score": 0},
+     "jp": {"location_score": 0}},
+    "language": {"ja": {"name": "札幌・定山渓"}, "en": {"name": "札幌・定山渓"}},
+    "parent_location_code": "00001",
+    "source": "kosokubus",
+    "country": "A01-003"
+}

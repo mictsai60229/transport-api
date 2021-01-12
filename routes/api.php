@@ -37,8 +37,8 @@ Route::namespace('v1')->prefix('v1')->group(function () {
 
     //common
     // indices
-    Route::put('/{index}/indices/create', [IndicesController::class, 'create']);
-    Route::post('/{index}/indices/setAliases', [IndicesController::class, 'setAliases']);
+    Route::post('/{index}/indices/create', [IndicesController::class, 'create']);
+    //Route::post('/{index}/indices/setAliases', [IndicesController::class, 'setAliases']);
     Route::post('/{index}/indices/change', [IndicesController::class, 'change']);
 
     //bulk

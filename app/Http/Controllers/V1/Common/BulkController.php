@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\V1\Common;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\ApiController as Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -17,44 +17,49 @@ class BulkController extends Controller{
 
     public function bulk(Request $request, string $index){
 
-        $validator = Validator::make($request->all(), [
+        $validation_rules = [
             'action_type' => ['required', Rule::in(['index', 'delete', 'update'])],
             'body' => 'required'
-        ]);
+        ];
 
-        if ($validator->fails()) {
-            return $validator->errors();
-        }
+        $this->validateRequest($request, $validation_rules);
 
-        $action_type = $request->input('action_type');
-        $actions = $request->input('body');
-        $validate_range = ($action_type === "index")?"all":"part";
+        $req_params = [];
 
-        return $this->es_bulk->bulk($index, $action_type, $actions, $validate_range);
+        $req_params['index'] = $index;
+        $req_params['action_type'] = $request->input('action_type');
+        $req_params['actions'] = $request->input('body');
+        $req_params['validate_range'] = ($req_params['action_type'] === "index")? "all": "part";
+
+        $response_formatter = $this->es_bulk->bulk($req_params);
+        return $this->renderApiResonse($response_formatter);
     }
 
     public function start(Request $request, string $index){
         
-        $validator = Validator::make($request->all(), [
-            'target_index' => 'nullable|string',
-            'force' => 'nullable|boolean',
-            'docs_threshold' => 'nullable|numeric|between:0,1'
-        ]);
+        $validation_rules = [
+            'target_index' => 'nullable|string'
+        ];
 
-        if ($validator->fails()) {
-            return $validator->errors();
-        }
+        $this->validateRequest($request, $validation_rules);
 
-        $target_index = $request->input('target_index', null);
-        $force = $request->input('force', null);
-        $docs_threshold = $force?0.0:(float)$request->input('docs_threshold', 0.7);
+        $req_params = [];
 
-        return $this->es_bulk->start($index, $target_index, $docs_threshold);
+        $req_params['index'] = $index;
+        $req_params['target_index'] = $request->input('target_index', null);
+
+        $response_formatter =$this->es_bulk->start($req_params);
+        return $this->renderApiResonse($response_formatter);
     }
 
     public function end(Request $request, string $index){
 
-        return $this->es_bulk->end($index);
+        $req_params = [];
+
+        $req_params['index'] = $index;
+
+        $response_formatter =$this->es_bulk->end($req_params);
+        return $this->renderApiResonse($response_formatter);
     }
 
 

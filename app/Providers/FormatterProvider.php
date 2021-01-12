@@ -3,8 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Formatters\TransportFormatter;
-use App\Formatters\BaseFormatter;
+use App\Formatters\Document\TransportFormatter;
 
 class FormatterProvider extends ServiceProvider{
     /**
@@ -14,13 +13,10 @@ class FormatterProvider extends ServiceProvider{
      */
     public function register(){
         
-        $this->app->singleton('Formatter/transport', function ($app) {
+        $this->app->singleton('Formatters/Document/transport', function ($app) {
             return new TransportFormatter();
         });
 
-        $this->app->singleton('Formatter/base', function ($app) {
-            return new BaseFormatter();
-        });
     }
 
     /**

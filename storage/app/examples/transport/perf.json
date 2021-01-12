@@ -1,0 +1,11 @@
+{
+    "location_code": "00001",
+    "location_type": "pref",
+    "locale": {"kk": {"location_score": 0},
+     "tw": {"location_score": 0},
+     "jp": {"location_score": 0}},
+    "language": {"ja": {"name": "Hokkaido"}, "en": {"name": "Hokkaido"}},
+    "parent_location_code": "00001",
+    "source": "kosokubus",
+    "country": "A01-003"
+}

@@ -19,7 +19,7 @@ return [
 
     //api transport
     'transport' => [
-        'location_type' => ['all', 'cities', 'area', 'bus_station']
+        'location_type' => ['perf', 'city', 'dep']
     ] 
 
     

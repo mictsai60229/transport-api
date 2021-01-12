@@ -1,0 +1,13 @@
+{
+    "location_code": "00H",
+    "location_type": "dep",
+    "locale": {"kk": {"location_score": 0},
+     "tw": {"location_score": 0},
+     "jp": {"location_score": 0}},
+    "language": {"ja": {"name": "JRタワーホテル日航札幌1Fロビー"},
+     "en": {"name": "JRタワーホテル日航札幌1Fロビー"}},
+    "coordinates": {"lat": "43.06852723564904", "lon": "141.35319828987122"},
+    "parent_location_code": "00000",
+    "source": "kosokubus",
+    "country": "A01-003"
+}

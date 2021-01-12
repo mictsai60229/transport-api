@@ -3,8 +3,12 @@
 namespace App\Services\Elasticsearch;
 
 use Illuminate\Support\Facades\Storage;
-use App\Repositories\Elasticsearch as EsRepo;
+use App\Repositories\Elasticsearch\Cat as EsCatRepo;
+use App\Repositories\Elasticsearch\Indices as EsIndicesRepo;
 use App\Exceptions\CommonApiException;
+
+use App\Formatters\Response\Common\IndicesCreateResponse;
+use App\Formatters\Response\Common\IndicesChangeResponse;
 
 Class Indices{
 
@@ -12,49 +16,50 @@ Class Indices{
     protected $es_cat_repo;
 
     public function __construct(){
-        $this->es_indices_repo = new EsRepo\Indices;
-        $this->es_cat_repo  = new EsRepo\Cat; 
+        $this->es_indices_repo = new EsIndicesRepo;
+        $this->es_cat_repo  = new EsCatRepo; 
     }
 
-    /*
-    * Create index, set the newest index alias to "{$index}-latest"
-    * @param string $index, string $configPath
-    * @return 
-    */
-    public function create(string $index, int $backup_count=0, float $docs_threshold=0.7){
+    /**
+     * Undocumented function
+     *
+     * @param array $req_params
+     * @return void
+     */
+    public function create(array $req_params){
 
         // check $index-latest is setted
-        $index_alias = "{$index}-latest";
-        if(!empty($this->catAlias($index_alias))){
-            throw new CommonApiException("Index with name {$index}-latest exist.");
+        $latest_alias = "{$req_params['index']}-latest";
+        if(!empty($this->catAlias($latest_alias))){
+            throw new CommonApiException("Alias with name {$latest_alias} exist.");
         }
 
-        $this->deleteIndices($index, $backup_count, $docs_threshold);
+        $delete_indices = $this->deleteIndices($req_params['index'], $req_params['backup_count'], $req_params['docs_threshold']);
 
         //add timestamp
         $date = date("YmdHis");
-        $index_timestamp = "{$index}-{$date}";
+        $index_timestamp = "{$req_params['index']}-{$date}";
 
         $params = [
             'index' => $index_timestamp,
-            'body' => $this->getCreateBody("elasticsearch/{$index}")
+            'body' => $this->getCreateBody("elasticsearch/{$req_params['index']}")
         ];
 
-        $response = $this->es_indices_repo->create($params);
+        $es_response = $this->es_indices_repo->create($params);
         
-        //set alias to "{$index}-newest"
-        $create_index = $response["index"];
+        //set create_index alias to "{$index}-latest"
+        $create_index = $es_response["index"];
         $actions = [];
-        $actions[] = $this->updateAliasFormatter("add", $create_index, $index_alias);
+        $actions[] = $this->updateAliasFormatter("add", $create_index, $latest_alias);
         $this->updateAliases($actions);
-        $response['alias'] = $index_alias;
 
-        return $response;
+        $response_formatter = new IndicesCreateResponse($es_response, ["delete"=>$delete_indices]);
+        return $response_formatter;
         
     }
 
 
-    public function deleteIndices(string $index, int $backup_count=0, float $docs_threshold=0.7){
+    protected function deleteIndices(string $index, int $backup_count=0, float $docs_threshold=0.7){
 
         $indices = $this->countIndex($index, $docs_threshold);
         $current_index = $this->catAlias($index);
@@ -76,7 +81,7 @@ Class Indices{
         }
 
 
-        return ["remove" => $delete_indices];
+        return $delete_indices;
     }
 
 
@@ -85,37 +90,48 @@ Class Indices{
     * @param string $index
     * @return Array[string]
     */
-    public function setAliases(string $index, string $target_index = null, float $docs_threshold=0.7){
+    public function change(array $req_params){
         
         $aliases_actions = [];
-        $response = [];
+        $data = [];
 
-        if (!isset($target_index)){
-            $indices = $this->countIndex($index, $docs_threshold);
-            $target_index = $indices[0];
-        }
+        $latest_alias = "{$req_params['index']}-latest";
+        $latest_index = $this->catAlias($latest_alias);
 
-        $index_alias = "{$index}-latest";
-        $latest_index = $this->catAlias($index_alias);
-        if ($latest_index === $target_index){
-            $this->refresh($target_index);
-            $this->setInterval($index_alias, "10s");
-            $aliases_actions[] = $this->updateAliasFormatter("remove", $target_index, $index_alias);
+        if (!isset($req_params['target_index'])){
+            $req_params['target_index'] = $latest_index;
         }
         
-        $remove_index = $this->catAlias($index);
+        if(!isset($req_params['target_index'])){
+            throw new CommonApiException("Alias with name {$latest_alias} or parameter target_index should be set.");
+        }
 
-        if (!empty($remove_index)){
-            $aliases_actions[] = $this->updateAliasFormatter("remove", $remove_index, $index);
-            $response['remove'] = $remove_index;
+        $this->refresh($req_params['target_index']);
+
+        $main_index = $this->catAlias($req_params['index']);
+        if (!empty($main_index)){
+            $aliases_actions[] = $this->updateAliasFormatter("remove", $main_index, $req_params['index']);
+            $data['old_index'] = $main_index;
+
+            //check $target_index.docs_count > $remove_index.docs_count * $docs_threshold
+            if (! $this->compareIndex($req_params['target_index'], $main_index, $req_params['docs_threshold'])){
+                throw new CommonApiException("Index with name {$req_params['target_index']} doen't have enough data");
+            };
+        }
+
+
+        if ($latest_index === $req_params['target_index']){
+            $this->setInterval($req_params['target_index'], "10s");
+            $aliases_actions[] = $this->updateAliasFormatter("remove", $req_params['target_index'], $latest_alias);
         }
         
-        $aliases_actions[] = $this->updateAliasFormatter("add", $target_index, $index);
-        $response['add'] = $target_index;
+        $aliases_actions[] = $this->updateAliasFormatter("add", $req_params['target_index'], $req_params['index']);
+        $data['index'] = $req_params['target_index'];
         
-        $this->updateAliases($aliases_actions);
+        $es_response = $this->updateAliases($aliases_actions);
 
-        return $response;
+        $response_formatter = new IndicesChangeResponse($es_response, $data);
+        return $response_formatter;
     }
 
     /*
@@ -267,7 +283,7 @@ Class Indices{
         return $this->es_indices_repo->putSettings($params);
     }
 
-    protected function updateAliasFormatter($action, $index, $alias){
+    protected function updateAliasFormatter(string $action, string $index, string $alias){
 
         $alias_format = [
             $action => [
@@ -280,5 +296,24 @@ Class Indices{
             $alias_format[$action]['is_write_index'] = True;
         }
         return $alias_format;
+    }
+
+    protected function compareIndex(string $indexA, string $indexB, float $docs_threshold=0.7){
+        
+        $indexA_info = $this->es_cat_repo->indices(["index"=> [$indexA]]);
+        $indexB_info = $this->es_cat_repo->indices(["index"=> [$indexB]]);
+
+       
+        if (empty($indexA_info) || empty($indexB_info)){
+            throw new CommonApiException("One of index with name {$indexA}, {$indexB} doesn't exist .");
+        }
+
+        $indexA_info = $indexA_info[0];
+        $indexB_info = $indexB_info[0];
+
+        if ($indexA_info['docs.count'] >= $indexB_info['docs.count']*$docs_threshold){
+            return true;
+        }
+        return false;
     }
 }
